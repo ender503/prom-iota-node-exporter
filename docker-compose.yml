@@ -1,0 +1,35 @@
+version: '2.0'
+
+networks:
+  monitor-net:
+
+services:
+  node_exporter:
+    image: prom/node-exporter
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - --collector.filesystem.ignored-mount-points
+      - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
+    ports:
+      - 9201:9100
+    networks:
+      - monitor-net
+    restart: always
+
+  iota_prom_exporter:
+    image: bambash/iota-prom-exporter
+    volumes:
+      - ./iota-prom-exporter/config.js:/exporter/config.js
+    ports:
+      - 9200:9200
+    networks:
+      - monitor-net
+    environment:
+      - iota_node_url=${iota_node_url}
+      - iota_zmq_url=${iota_zmq_url}
+    restart: always
